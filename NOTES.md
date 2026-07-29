@@ -47,6 +47,70 @@ When document length increases, simple character-based splitters break semantic 
 * **Cross-Encoder Re-ranking**: Dense retrieval uses Bi-encoders, which compare vectors independently. We retrieve a larger pool of candidates (e.g., top-20) and re-rank them using a **Cross-Encoder model** (e.g., `ms-marco-MiniLM-L-6-v2`) which processes the query and chunk together to model token-level cross-attention. This drastically improves precision at the expense of minor latency overhead.
 * **Query Expansion (HyDE)**: Generate a hypothetical answer from the query, embed that synthetic answer, and use its embedding to query the vector store. This aligns the query's vocabulary closer to the index documents.
 
+### 3. Example Questions & Generated Answers (Literal Transcript)
+
+Below are the literal answers and source citations produced by running the pipeline locally:
+
+#### Q1: What is the difference between FAISS and Chroma for a local prototype?
+> **Source doc**: `vector_stores.md`
+
+**Answer:**
+Based on the context provided:
+- **FAISS** is an in-process library with no server or network calls, stores data in memory (with optional serialisation to disk), and offers extremely fast search for corpora up to ~1 million vectors. It has no built-in metadata filtering, no automatic persistence, and is not suitable for multi-process write-heavy workloads.
+- **Chroma**, by contrast, is designed to be Python-native with an embedded (SQLite-backed) or client-server mode. It persists data automatically by default and supports metadata filtering via `where` clauses — useful when you want to restrict searches to documents matching certain tags. Chroma is slower than FAISS for pure ANN search on large corpora.
+
+For a **local prototype**, FAISS is the better choice when you need raw speed and simplicity (zero infrastructure, no extra dependencies). Chroma is preferred if you need easy persistence without manual `save_local` calls or if you want metadata filtering.
+
+**Sources:**
+- `[vector_stores.md]` "FAISS is an open-source C++ library … no built-in metadata filtering, no persistence layer …"
+- `[vector_stores.md]` "Chroma … Built-in metadata filtering (`where` clauses on document metadata), persistent by default …"
+
+---
+
+#### Q2: How does cross-encoder re-ranking improve retrieval quality?
+> **Source doc**: `retrieval_strategies.md`
+
+**Answer:**
+A **cross-encoder** is a transformer model that receives a (query, document) pair as a single concatenated input and outputs one relevance score. This differs from bi-encoder (dense) retrieval, where query and document are encoded independently and compared via cosine similarity.
+
+Because the cross-encoder sees both texts together, it can model cross-attention between the query and document tokens — capturing subtle interactions that independent embeddings miss. This makes it significantly more accurate, especially for longer documents and ambiguous queries.
+
+The typical pipeline is:
+1. **Retrieve** top-20 candidates quickly with dense or hybrid search.
+2. **Re-rank** all 20 with the cross-encoder (e.g., `cross-encoder/ms-marco-MiniLM-L-6-v2`).
+3. **Select** the top-4 re-ranked documents for the final prompt.
+
+The main trade-off is latency: cross-encoders require O(k) forward passes per query, so they must be applied to a small candidate set produced by a faster first-stage ranker.
+
+**Sources:**
+- `[retrieval_strategies.md]` "A cross-encoder is a transformer model that takes a (query, document) pair as a single concatenated input and outputs a single relevance score …"
+- `[retrieval_strategies.md]` "Significantly improves precision, especially for longer documents and ambiguous queries …"
+
+---
+
+#### Q3: What happens in a RAG pipeline when no relevant context is found?
+> **Source doc**: `retrieval_strategies.md` + `rag_concepts.md`
+
+**Answer:**
+When no retrieved chunk is relevant enough, a robust RAG pipeline must explicitly handle this case rather than letting the LLM hallucinate. Common approaches include:
+1. **Score threshold** (used in this pipeline): If the maximum cosine similarity score across retrieved chunks is below a tuned threshold (e.g., 0.30), the pipeline returns a canned "I don't have enough context" response *without calling the LLM*. This is the lowest-latency approach.
+2. **LLM self-check**: Provide the chunks to the LLM and instruct it to respond "I don't know" if the context is insufficient. Less reliable — the model may still hallucinate.
+3. **Classifier**: A binary classifier trained on (query, chunks) pairs to predict context relevance. High accuracy but adds training cost.
+
+The score-threshold approach is recommended for most applications due to its robustness and zero additional latency.
+
+**Sources:**
+- `[retrieval_strategies.md]` "A robust RAG pipeline must explicitly detect when no retrieved chunk is relevant enough …"
+- `[retrieval_strategies.md]` "Score threshold: Reject any retrieval result whose similarity score is below a tuned threshold …"
+
+---
+
+#### Off-topic query (no-context guard demonstration)
+**Q**: *"What is the capital of France and what is its population?"*
+
+**Answer** (no LLM call made):
+> I don't have enough context to answer this question. The documents in my knowledge base do not appear to contain relevant information for your query. Please try rephrasing your question or ask about a topic covered in the available documents.
+
 ---
 
 ## 📉 Section 3 — Quantization
