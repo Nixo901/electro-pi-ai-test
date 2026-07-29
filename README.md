@@ -105,10 +105,11 @@ python scripts/load_test.py --url http://localhost:8000 --concurrency 10 --token
 ## 📝 Trade-offs and Key Technical Write-ups
 
 All requested half-page architectural write-ups and trade-offs evaluations are compiled in a single consolidated document at the root of the project:
-* 📄 [**`NOTES.md`**](file:///c:/Users/nezar/Downloads/technical_test/NOTES.md) (Unified top-level answers covering all sections)
+* 📄 [**`NOTES.md`**](NOTES.md) (Unified top-level answers covering all sections)
 
 In addition, each section contains context-specific write-ups in its own folder:
-* **Section 1**: Detail of barge-in configuration, VAD endpointing, and second-tool design safety is in [**`section_1/NOTES.md`**](file:///c:/Users/nezar/Downloads/technical_test/section_1/NOTES.md).
-* **Section 2**: Detailed proposals on chunking strategy adjustments (semantic, summary, hierarchical chunking) and retrieval upgrades (hybrid search, cross-encoder re-ranking) are in [**`section_2/README.md#L200-L230`**](file:///c:/Users/nezar/Downloads/technical_test/section_2/README.md#L200-L230).
-* **Section 3**: Comparison of runtime bitsandbytes (NF4) against AWQ/GPTQ and GGUF is in [**`section_3/README.md#L118-L190`**](file:///c:/Users/nezar/Downloads/technical_test/section_3/README.md#L118-L190).
-* **Section 4**: Justification of FastAPI vs vLLM/TGI and architectural designs for scaling to 50+ concurrent users are in [**`section_4/README.md#L161-L188`**](file:///c:/Users/nezar/Downloads/technical_test/section_4/README.md#L161-L188).
+* **Section 1**: Detail of barge-in configuration, VAD endpointing, and second-tool design safety is in [**`section_1/NOTES.md`**](section_1/NOTES.md).
+* **Section 2**: Detailed proposals on chunking strategy adjustments (semantic, summary, hierarchical chunking) and retrieval upgrades (hybrid search, cross-encoder re-ranking) are in [**`section_2/README.md`**](section_2/README.md).
+* **Section 3**: Comparison of runtime bitsandbytes (NF4) against AWQ/GPTQ and GGUF is in [**`section_3/README.md`**](section_3/README.md).
+* **Section 4**: Justification of FastAPI vs vLLM/TGI and architectural designs for scaling to 50+ concurrent users are in [**`section_4/README.md`**](section_4/README.md).
+

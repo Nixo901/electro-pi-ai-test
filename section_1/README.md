@@ -253,11 +253,12 @@ get_order_status(order_id)
 It looks up a fixed test order and never calls an external delivery system. Try asking in Arabic for the status of an order, then provide a numeric order ID when requested.
 
 ### 📄 Saved Tool-Call Transcript
-A verified session log proving the LLM successfully invokes this tool is captured in [**`section_1/artifacts/tool_call_demo.json`**](file:///c:/Users/nezar/Downloads/technical_test/section_1/artifacts/tool_call_demo.json):
+A verified session log proving the LLM successfully invokes this tool is captured in [**`artifacts/tool_call_demo.json`**](artifacts/tool_call_demo.json):
 
 ```json
 {
-  "timestamp_utc": "2026-07-24T22:48:19.932010+00:00",
+  "timestamp_utc": "2026-07-29T23:23:24.720210+00:00",
+  "model_used": "llama-3.3-70b-versatile",
   "user_utterance": "ما حالة طلبي رقم 1002؟",
   "llm_tool_call": {
     "name": "get_order_status",
@@ -266,14 +267,15 @@ A verified session log proving the LLM successfully invokes this tool is capture
     }
   },
   "tool_result": "الطلب 1002 خرج مع المندوب. الوقت المتوقع للوصول 7 دقائق.",
-  "expected_agent_reply": "الطلب 1002 خرج مع المندوب. الوقت المتوقع للوصول 7 دقائق. هل يمكنني مساعدتك في شيء آخر؟"
+  "expected_agent_reply": "حسناً."
 }
 ```
 
-Run the standalone tool execution simulation that compiles this log:
+Run the real LLM tool calling script that contacts the Groq API and generates this log:
 ```powershell
-python scripts\tool_demo.py
+python scripts\record_tool_call.py
 ```
+
 
 
 ## Tests
@@ -292,7 +294,7 @@ python -m compileall -q src scripts
 
 ## Technical write-up
 
-For detailed explanations of barge-in/interruption handling, safety schema design for secondary tools, and vendor decoupling trade-offs, please refer to [NOTES.md](file:///C:/Users/nezar/Downloads/section_1/NOTES.md).
+For detailed explanations of barge-in/interruption handling, safety schema design for secondary tools, and vendor decoupling trade-offs, please refer to [**`NOTES.md`**](NOTES.md).
 
 ## Production notes
 
