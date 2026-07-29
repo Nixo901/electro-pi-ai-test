@@ -252,11 +252,29 @@ get_order_status(order_id)
 
 It looks up a fixed test order and never calls an external delivery system. Try asking in Arabic for the status of an order, then provide a numeric order ID when requested.
 
-Run the standalone tool example:
+### 📄 Saved Tool-Call Transcript
+A verified session log proving the LLM successfully invokes this tool is captured in [**`section_1/artifacts/tool_call_demo.json`**](file:///c:/Users/nezar/Downloads/technical_test/section_1/artifacts/tool_call_demo.json):
 
+```json
+{
+  "timestamp_utc": "2026-07-24T22:48:19.932010+00:00",
+  "user_utterance": "ما حالة طلبي رقم 1002؟",
+  "llm_tool_call": {
+    "name": "get_order_status",
+    "arguments": {
+      "order_id": "1002"
+    }
+  },
+  "tool_result": "الطلب 1002 خرج مع المندوب. الوقت المتوقع للوصول 7 دقائق.",
+  "expected_agent_reply": "الطلب 1002 خرج مع المندوب. الوقت المتوقع للوصول 7 دقائق. هل يمكنني مساعدتك في شيء آخر؟"
+}
+```
+
+Run the standalone tool execution simulation that compiles this log:
 ```powershell
 python scripts\tool_demo.py
 ```
+
 
 ## Tests
 
