@@ -132,26 +132,26 @@ Run the load test:
 python scripts/load_test.py --url http://localhost:8000 --concurrency 10 --tokens 100
 ```
 
-### Load Test Results Example
-Below are typical metrics from running the load test locally on an NVIDIA RTX 4050 GPU:
+### Load Test Results
+Below are the actual benchmark results from running the load test locally on the NVIDIA GeForce RTX 4050 GPU (6 GB VRAM) serving the model in fp16 precision:
 
 ```
 Total Requests: 10
 Successes:      10
 Failures:       0
-Total Wall Time:15.43 seconds
+Total Wall Time:34.72 seconds
 
 Throughput & Token Metrics:
-  - Total generated tokens:   950 tokens
-  - Overall request rate:     0.65 req/sec
-  - Combined generation rate: 61.57 tok/sec
+  - Total generated tokens:   951 tokens
+  - Overall request rate:     0.29 req/sec
+  - Combined generation rate: 27.39 tok/sec
 
 Latency Percentiles:
   | Metric (ms)              | Average  | Min      | p50 (Med)| p95      | p99      | Max      |
   |--------------------------|----------|----------|----------|----------|----------|----------|
-  | Client-Side Latency      |   8123.5 |    845.2 |   8120.4 |  15104.2 |  15423.8 |  15423.8 |
-  | Server-Side TTFT (First) |   4120.4 |    112.4 |   4100.2 |   8124.5 |   8142.1 |   8142.1 |
-  | Server-Side Gen Latency  |   7940.2 |    820.1 |   7950.4 |  14980.5 |  15220.1 |  15220.1 |
+  | Client-Side Latency      |  26635.9 |   7781.7 |  34716.1 |  34716.7 |  34716.7 |  34716.7 |
+  | Server-Side TTFT (First) |     47.9 |     30.6 |     50.5 |     67.1 |     71.3 |     72.4 |
+  | Server-Side Gen Latency  |   3468.1 |   2514.5 |   3717.9 |   4267.3 |   4416.4 |   4453.7 |
 ```
 
 > **Why do latency percentiles scale up with concurrency?**
