@@ -1,0 +1,11 @@
+services:
+  livekit:
+    image: livekit/livekit-server:v1.13.4
+    # Docker Desktop gives the container an unreachable 172.x address. For a
+    # same-machine demo, advertise the Windows loopback address instead; the
+    # UDP/TCP ports below are forwarded into the container by Docker.
+    command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"

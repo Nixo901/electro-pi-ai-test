@@ -1,0 +1,2 @@
+# Install the project in editable mode with development dependencies
+-e .[dev]

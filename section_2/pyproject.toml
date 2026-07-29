@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rag-pipeline"
+version = "0.1.0"
+description = "Task 2.1 — LangChain RAG pipeline with FAISS, sentence-transformers, and Groq."
+requires-python = ">=3.10"
+dependencies = [
+  # LangChain core
+  "langchain>=1.0",
+  "langchain-core>=1.0",
+  "langchain-community>=0.4",
+  "langchain-text-splitters>=1.0",
+  # Groq SDK directly (avoids langchain-groq/groq version conflict)
+  "groq>=1.0.0",
+  # Vector store
+  "faiss-cpu>=1.8",
+  # Embeddings (local, no API key required)
+  "langchain-huggingface>=0.1",
+  "sentence-transformers>=3.0",
+  # Config
+  "pydantic-settings>=2.0",
+  "python-dotenv>=1.1",
+  # CLI output
+  "rich>=14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+]
+
+[project.scripts]
+rag-examples = "rag_pipeline.scripts.run_examples:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag_pipeline"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestDeprecationWarning",
+]

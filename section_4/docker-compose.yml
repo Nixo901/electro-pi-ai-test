@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  llm-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qwen-inference-api:latest
+    container_name: qwen-api-server
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_ID=Qwen/Qwen2.5-1.5B-Instruct
+      - DEVICE=cuda
+      - QUANTIZATION=fp16
+    volumes:
+      - hf_model_cache:/model_cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  hf_model_cache:
+    driver: local

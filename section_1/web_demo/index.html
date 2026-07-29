@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Food Delivery Voice Assistant</title>
+    <style>
+      body { background: #f5f7fb; color: #182230; font: 16px system-ui, sans-serif; margin: 0; }
+      main { background: white; border-radius: 16px; box-shadow: 0 8px 30px #17203318; margin: 8vh auto; max-width: 680px; padding: 32px; }
+      button, select { box-sizing: border-box; font: inherit; width: 100%; }
+      select { border: 1px solid #cbd3df; border-radius: 8px; margin: 6px 0 16px; padding: 10px; }
+      button { background: #1463d8; border: 0; border-radius: 8px; color: white; cursor: pointer; font-weight: 700; padding: 13px; }
+      button:disabled { background: #94a3b8; cursor: not-allowed; }
+      #talk { background: #0d8a52; display: none; margin-top: 14px; min-height: 58px; }
+      #talk.recording { background: #c9333e; transform: scale(0.99); }
+      #status { background: #eef4ff; border-radius: 8px; margin-top: 18px; padding: 12px; white-space: pre-wrap; }
+      .hint { color: #526170; line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Food Delivery Voice Assistant</h1>
+      <p class="hint" id="hint">Select a language, authenticate, then hold the talk button while speaking and release it to submit your voice turn.</p>
+      <label for="language">Conversation language</label>
+      <select id="language">
+        <option value="english">English - Deepgram STT and TTS</option>
+        <option value="arabic">العربية - Groq Whisper and Orpheus</option>
+      </select>
+      <button id="connect">Authenticate and connect</button>
+      <button id="talk" disabled>Hold to talk</button>
+      <div id="status">Not connected</div>
+    </main>
+    <script type="module">
+      import { Room, RoomEvent, Track } from "https://cdn.jsdelivr.net/npm/livekit-client@2.15.7/+esm";
+      const status = document.querySelector("#status");
+      const language = document.querySelector("#language");
+      const connectButton = document.querySelector("#connect");
+      const talkButton = document.querySelector("#talk");
+      let room = null;
+      let recording = false;
+      let submitting = false;
+      const textDecoder = new TextDecoder();
+      const report = (message) => status.textContent = message;
+      const isArabic = () => language.value === "arabic";
+
+      function setTalkState(active) {
+        recording = active;
+        talkButton.classList.toggle("recording", active);
+        talkButton.textContent = isArabic()
+          ? (active ? "تحدث الآن... حرر الزر للإرسال" : "اضغط باستمرار للتحدث")
+          : (active ? "Speak now... release to send" : "Hold to talk");
+      }
+
+      function localized(messageEnglish, messageArabic) { return isArabic() ? messageArabic : messageEnglish; }
+
+      async function startTalking(event) {
+        event?.preventDefault();
+        if (!room || recording || submitting) return;
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true);
+          setTalkState(true);
+          report(localized("Recording. Release the button to send your voice turn.", "جاري التسجيل. حرر الزر عند الانتهاء لإرسال صوتك."));
+        } catch (error) { report(localized(`Could not open microphone: ${error.message}`, `تعذر فتح الميكروفون: ${error.message}`)); }
+      }
+
+      async function submitVoice(event) {
+        event?.preventDefault();
+        if (!room || !recording || submitting) return;
+        submitting = true;
+        setTalkState(false);
+        talkButton.disabled = true;
+        report(localized("Voice submitted. Processing your response...", "تم إرسال صوتك. جارٍ معالجة ردك..."));
+        // Preserve a little trailing silence: this is essential for reliable
+        // endpointing when the user releases the push-to-talk button.
+        try {
+          await new Promise(resolve => window.setTimeout(resolve, 1200));
+          await room.localParticipant.setMicrophoneEnabled(false);
+        } finally {
+          submitting = false;
+          talkButton.disabled = false;
+        }
+      }
+
+      connectButton.addEventListener("click", async () => {
+        connectButton.disabled = true;
+        try {
+          const selectedLanguage = language.value;
+          const credentials = await fetch(`/api/token?language=${selectedLanguage}`).then(async response => {
+            if (!response.ok) throw new Error(await response.text());
+            return response.json();
+          });
+          room = new Room({ adaptiveStream: true, dynacast: true });
+          room.on(RoomEvent.TrackSubscribed, (track) => {
+            if (track.kind === Track.Kind.Audio) {
+              const audio = track.attach(); audio.autoplay = true; document.body.appendChild(audio);
+              report(localized("Assistant audio connected.", "تم توصيل صوت المساعد."));
+            }
+          });
+          room.on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
+            if (topic !== "assistant-tts-fallback") return;
+            try {
+              const message = JSON.parse(textDecoder.decode(payload));
+              if (!message.text) return;
+              // Groq TTS is temporarily rate-limited. Use the user's local
+              // browser voice so the assistant still responds audibly.
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(message.text);
+              utterance.lang = message.language === "arabic" ? "ar-SA" : "en-US";
+              utterance.rate = 0.95;
+              window.speechSynthesis.speak(utterance);
+              report(localized("Assistant response (local voice fallback).", "رد المساعد (صوت محلي احتياطي)."));
+            } catch (error) {
+              report(localized(`Assistant text received, but local speech failed: ${error.message}`, `تم استلام رد المساعد، لكن تعذر تشغيل الصوت المحلي: ${error.message}`));
+            }
+          });
+          room.on(RoomEvent.Disconnected, () => {
+            talkButton.disabled = true; talkButton.style.display = "none"; language.disabled = false;
+            connectButton.disabled = false; connectButton.textContent = localized("Authenticate and connect", "مصادقة واتصال");
+            report(localized("Disconnected.", "تم قطع الاتصال."));
+          });
+          await room.connect(credentials.url, credentials.token);
+          await room.localParticipant.setMicrophoneEnabled(false);
+          language.disabled = true; talkButton.style.display = "block"; talkButton.disabled = false;
+          connectButton.textContent = localized("Authenticated", "تمت المصادقة"); setTalkState(false);
+          report(localized("Connected. Hold the talk button and speak English.", "تم الاتصال. اضغط باستمرار على زر التحدث وتكلم بالعربية."));
+        } catch (error) { room = null; connectButton.disabled = false; report(`Could not connect: ${error.message}`); }
+      });
+      language.addEventListener("change", () => setTalkState(false));
+      talkButton.addEventListener("pointerdown", startTalking);
+      talkButton.addEventListener("pointerup", submitVoice);
+      talkButton.addEventListener("pointercancel", submitVoice);
+      window.addEventListener("pointerup", submitVoice);
+    </script>
+  </body>
+</html>

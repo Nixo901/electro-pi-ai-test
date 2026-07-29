@@ -1,0 +1,33 @@
+# Ignore local environment files containing keys/secrets
+.env
+.env.local
+.env.*
+section_1/.env
+section_2/.env
+
+# Ignore Python virtual environments
+.venv/
+venv/
+env/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore test caches & local outputs
+.pytest_cache/
+.coverage
+htmlcov/
+section_3/benchmark_output.txt
+section_3/results/temp_*.json
+
+# Ignore log files
+*.log
+section_1/crash_*.log
+section_3/crash_*.log
+section_4/crash_*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
